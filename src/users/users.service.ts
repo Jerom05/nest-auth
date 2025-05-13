@@ -9,7 +9,9 @@ import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectRepository(User) private readonly usersRepository: Repository<User>) {}
+  constructor(
+    @InjectRepository(User) private readonly usersRepository: Repository<User>,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
@@ -17,6 +19,10 @@ export class UsersService {
     const user = this.usersRepository.create(createUserDto);
     const savedUser = await this.usersRepository.save(user);
     return plainToInstance(User, savedUser);
+  }
+
+  findByEmail(email: string) {
+    return this.usersRepository.findOne({ where: { email } });
   }
 
   findAll() {
