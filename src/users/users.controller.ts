@@ -12,6 +12,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { ActiveUser } from 'src/common/decorators/active-user.decorator';
 
 @Controller('users')
 export class UsersController {
@@ -20,6 +21,13 @@ export class UsersController {
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
+  }
+
+  @Get('profile')
+  getProfile(@ActiveUser() user: any) {
+    return {
+      user,
+    };
   }
 
   @Get()
