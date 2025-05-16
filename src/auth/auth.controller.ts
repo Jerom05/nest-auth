@@ -20,4 +20,10 @@ export class AuthController {
   signin(@Body() signInDto: SignInDto) {
     return this.authService.signin(signInDto);
   }
+
+  @Public()
+  @Post('refresh-token')
+  refreshToken(@Body('refresh_token') refreshToken: string) {
+    return this.authService.refreshToken(refreshToken);
+  }
 }
