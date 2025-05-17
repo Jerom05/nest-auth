@@ -1,6 +1,7 @@
 import { Exclude } from 'class-transformer';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { UserSession } from './user-session.entity';
+import { Role } from '../../common/enums/role.enum';
 
 @Entity('users')
 export class User {
@@ -18,7 +19,7 @@ export class User {
   password: string;
 
   @Column({ default: 'user' })
-  role: string;
+  role: Role;
 
   @OneToMany(() => UserSession, (session) => session.user)
   sessions: UserSession[];
