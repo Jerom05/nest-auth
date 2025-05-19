@@ -21,8 +21,26 @@ export class UsersService {
     return plainToInstance(User, savedUser);
   }
 
+  async createGoogleUser(userData: {
+    googleId: string;
+    email: string;
+    name: string;
+  }): Promise<User> {
+    const user = this.usersRepository.create({
+      googleId: userData.googleId,
+      email: userData.email,
+      name: userData.name,
+    });
+    const savedUser = await this.usersRepository.save(user);
+    return plainToInstance(User, savedUser);
+  }
+
   findByEmail(email: string) {
     return this.usersRepository.findOne({ where: { email } });
+  }
+
+  findByGoogleId(googleId: string) {
+    return this.usersRepository.findOne({ where: { googleId } });
   }
 
   findAll() {
