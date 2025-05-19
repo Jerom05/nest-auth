@@ -8,11 +8,13 @@ import {
   Delete,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { ActiveUser } from 'src/common/decorators/active-user.decorator';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ActiveUser } from 'src/common/decorators/active-user.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/enums/role.enum';
 
 @Controller('users')
 export class UsersController {
@@ -25,11 +27,11 @@ export class UsersController {
 
   @Get('profile')
   getProfile(@ActiveUser() user: any) {
-    return {
-      user,
-    };
+    return { user };
   }
 
+  @UseGuards(RolesGuard)
+  @Roles(Role.Admin)
   @Get()
   findAll() {
     return this.usersService.findAll();
