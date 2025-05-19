@@ -51,6 +51,20 @@ export class AuthService {
     return tokens;
   }
 
+  async validateOAuthLogin(profile: any) {
+    console.log('profile', profile);
+    let user = await this.usersService.findByGoogleId(profile.id);
+
+    if (!user) {
+      user = await this.usersService.createGoogleUser({
+        googleId: profile.id,
+        email: profile.emails?.[0]?.value,
+        name: profile.displayName,
+      });
+    }
+    return this.generateToken(user.id, user.email, user.role);
+  }
+
   async refreshToken(refresh_token: string) {
     const payload = this.jwtService.verify(refresh_token, {
       secret: this.configService.get<string>('SECRET_KEY'),
