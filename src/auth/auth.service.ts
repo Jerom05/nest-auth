@@ -52,7 +52,6 @@ export class AuthService {
   }
 
   async validateOAuthLogin(profile: any) {
-    console.log('profile', profile);
     let user = await this.usersService.findByGoogleId(profile.id);
 
     if (!user) {
@@ -62,7 +61,7 @@ export class AuthService {
         name: profile.displayName,
       });
     }
-    return this.generateToken(user.id, user.email, user.role);
+    return user;
   }
 
   async refreshToken(refresh_token: string) {
@@ -90,7 +89,7 @@ export class AuthService {
     return tokens;
   }
 
-  private generateToken(userId: string, email: string, role: string) {
+  generateToken(userId: string, email: string, role: string) {
     const payload = { sub: userId, email, role };
     const access_token = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('SECRET_KEY'),
