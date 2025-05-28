@@ -31,7 +31,7 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   googleAuthRedirect(@Req() req) {
     const user = req.user || {};
-    return this.authService.generateToken(user.id, user.email, user.role);
+    return this.authService.generateToken(user);
   }
 
   @Public()

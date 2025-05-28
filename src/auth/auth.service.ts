@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { UserSession } from 'src/users/entities/user-session.entity';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -22,14 +23,7 @@ export class AuthService {
 
   async signup(data: SignUpDto) {
     const user = await this.usersService.create(data);
-    const tokens = this.generateToken(user.id, user.email, user.role);
-    const hashed = await bcrypt.hash(tokens.refresh_token, 10);
-    await this.userSessionsRepository.save({
-      user,
-      hashedRefreshToken: hashed,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
-    return tokens;
+    return this.generateToken(user);
   }
 
   async signin(data: SignInDto) {
@@ -40,15 +34,7 @@ export class AuthService {
     const passwordValid = await bcrypt.compare(password, user.password);
     if (!passwordValid) throw new UnauthorizedException('Invalid credentials');
 
-    const tokens = this.generateToken(user.id, user.email, user.role);
-    const hashed = await bcrypt.hash(tokens.refresh_token, 10);
-    await this.userSessionsRepository.save({
-      user,
-      hashedRefreshToken: hashed,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
-
-    return tokens;
+    return this.generateToken(user);
   }
 
   async validateOAuthLogin(profile: any) {
@@ -69,7 +55,7 @@ export class AuthService {
       secret: this.configService.get<string>('SECRET_KEY'),
     });
     const sessions = await this.userSessionsRepository.find({
-      where: { user: { id: payload.sub } },
+      where: { user: { id: payload.userId } },
       relations: ['user'],
     });
 
@@ -78,27 +64,33 @@ export class AuthService {
     );
     if (!session) throw new UnauthorizedException('Invalid refresh token');
 
-    const tokens = await this.generateToken(
-      payload.sub,
-      payload.email,
-      payload.role,
-    );
-    session.hashedRefreshToken = await bcrypt.hash(tokens.refresh_token, 10);
-    await this.userSessionsRepository.save(session);
-
-    return tokens;
+    payload.sessionId = session.id;
+    return { access_token: this.createToken(payload, '15m') };
   }
 
-  generateToken(userId: string, email: string, role: string) {
-    const payload = { sub: userId, email, role };
-    const access_token = this.jwtService.sign(payload, {
+  createToken(payload, expiresIn) {
+    return this.jwtService.sign(payload, {
       secret: this.configService.get<string>('SECRET_KEY'),
-      expiresIn: '1h',
+      expiresIn,
     });
-    const refresh_token = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('SECRET_KEY'),
-      expiresIn: '7d',
+  }
+
+  async generateToken(user: User) {
+    const { id: userId, email, role } = user || {};
+    const payload = { userId, email, role };
+
+    const refresh_token = this.createToken(payload, '7d');
+
+    const hashed = await bcrypt.hash(refresh_token, 10);
+    const userSession = await this.userSessionsRepository.save({
+      user,
+      hashedRefreshToken: hashed,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
+
+    (payload as any).sesssionId = userSession.id;
+
+    const access_token = this.createToken(payload, '15m');
     return { access_token, refresh_token };
   }
 }
