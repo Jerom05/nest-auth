@@ -37,6 +37,15 @@ export class AuthService {
     return this.generateToken(user);
   }
 
+  async signout(sessionId) {
+    const session = await this.userSessionsRepository.findOne({
+      where: { id: sessionId },
+    });
+    if (!session) throw new UnauthorizedException('Invalid session');
+    await this.userSessionsRepository.remove(session);
+    return { message: 'Signed out successfully' };
+  }
+
   async validateOAuthLogin(profile: any) {
     let user = await this.usersService.findByGoogleId(profile.id);
 

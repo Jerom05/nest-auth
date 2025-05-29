@@ -22,6 +22,12 @@ export class AuthController {
   }
 
   @Public()
+  @Post('signout')
+  signout(@Body('session_id') sessionId: string) {
+    return this.authService.signout(sessionId);
+  }
+
+  @Public()
   @Get('google')
   @UseGuards(AuthGuard('google'))
   googleAuth() {}
